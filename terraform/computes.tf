@@ -29,7 +29,7 @@ resource "oci_core_instance" "server" {
   }
 
   create_vnic_details {
-    subnet_id        = oci_core_subnet.this.id
+    subnet_id        = oci_core_subnet.k3s.id
     assign_public_ip = true
     hostname_label   = "server"
   }
@@ -57,7 +57,7 @@ resource "oci_core_instance" "agent" {
   }
 
   create_vnic_details {
-    subnet_id        = oci_core_subnet.this.id
+    subnet_id        = oci_core_subnet.k3s.id
     assign_public_ip = true
     hostname_label   = "agent${count.index + 1}"
   }
