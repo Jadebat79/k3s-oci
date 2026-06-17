@@ -32,7 +32,7 @@ variable "compartment_ocid" {
 variable "use_existing_vcn" {
   description = "If true, attach to an existing VCN instead of creating a new one"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "existing_vcn_ocid" {
