@@ -21,6 +21,12 @@ subnet_cidr                  = "10.0.1.0/24" # must fit inside the VCN CIDR
 ssh_public_key      = "ssh-ed25519 AAAA... yourname@host"
 ssh_allowed_cidr    = "0.0.0.0/0"
 
+# A1 "Out of host capacity"? Try a different availability domain (multi-AD regions
+# like uk-london-1 have 3). Set the 1-based index and re-apply until one succeeds.
+# availability_domain_number = 2
+# Or pin by full name (see the `availability_domains` output):
+# availability_domain = "kIdk:UK-LONDON-1-AD-2"
+
 # 3 nodes total = 1 server + 2 agents, each 1 OCPU / 6 GB (= 3 OCPU / 18 GB).
 # If capped at 2 OCPU / 12 GB, set agent_count = 1 (2 nodes total).
 agent_count         = 2

@@ -64,6 +64,18 @@ variable "ssh_allowed_cidr" {
   default     = "0.0.0.0/0"
 }
 
+variable "availability_domain" {
+  description = "Optional. Full AD name to launch instances in (e.g. 'kIdk:UK-LONDON-1-AD-2'). Empty = use availability_domain_number / first AD. Use to hunt for A1 capacity."
+  type        = string
+  default     = ""
+}
+
+variable "availability_domain_number" {
+  description = "Optional. 1-based AD index to launch instances in (1, 2, or 3 in multi-AD regions). 0 = first AD. Ignored if availability_domain is set."
+  type        = number
+  default     = 0
+}
+
 variable "agent_count" {
   description = "Number of k3s agent (worker) nodes. Total nodes = 1 server + agent_count."
   type        = number

@@ -1,3 +1,13 @@
+output "availability_domains" {
+  description = "All availability domain names in this region (use with availability_domain to hunt for A1 capacity)"
+  value       = local.ad_names
+}
+
+output "selected_availability_domain" {
+  description = "Availability domain the instances are launched in"
+  value       = local.ad_name
+}
+
 output "subnet_id" {
   description = "Subnet OCID used by the k3s instances"
   value       = local.subnet_id

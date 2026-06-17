@@ -12,7 +12,14 @@ data "oci_core_images" "ubuntu" {
 }
 
 locals {
-  ad_name  = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  ad_names = [for ad in data.oci_identity_availability_domains.ads.availability_domains : ad.name]
+
+  # Capacity hunting: pin all nodes to a chosen AD by name, or by 1-based index.
+  # Empty name + index 0 falls back to the first AD (original behavior).
+  ad_name = var.availability_domain != "" ? var.availability_domain : (
+    var.availability_domain_number > 0 ? local.ad_names[var.availability_domain_number - 1] : local.ad_names[0]
+  )
+
   image_id = data.oci_core_images.ubuntu.images[0].id
   ssh_key  = var.ssh_public_key
 }
