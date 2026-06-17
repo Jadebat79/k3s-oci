@@ -25,8 +25,26 @@ variable "region" {
 }
 
 variable "compartment_ocid" {
-  description = "OCID of the compartment to create resources in (often the tenancy OCID for free tier)"
+  description = "OCID of the compartment where compute instances are created (e.g. k3-staging)"
   type        = string
+}
+
+variable "use_existing_vcn" {
+  description = "If true, attach to an existing VCN instead of creating a new one"
+  type        = bool
+  default     = false
+}
+
+variable "existing_vcn_ocid" {
+  description = "OCID of the existing VCN to use when use_existing_vcn is true"
+  type        = string
+  default     = ""
+}
+
+variable "vcn_compartment_ocid" {
+  description = "Compartment where the existing VCN lives. Required when use_existing_vcn is true and Terraform creates subnet/security list in that VCN."
+  type        = string
+  default     = ""
 }
 
 variable "ssh_public_key" {

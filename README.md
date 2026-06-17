@@ -122,6 +122,21 @@ Apps reach the DB at `postgres.data.svc.cluster.local:5432`.
 | `instance_memory_gbs` | `6` | RAM per node. |
 | `expose_http` | `true` | Open 80/443 for ingress. |
 | `ssh_allowed_cidr` | `0.0.0.0/0` | Lock to `YOUR_IP/32`. |
+| `use_existing_vcn` | `false` | Set `true` to attach to an existing VCN. |
+| `existing_vcn_ocid` | `""` | OCID of the existing VCN. |
+| `vcn_compartment_ocid` | `""` | Compartment that owns the VCN (if different from `compartment_ocid`). |
+| `existing_subnet_ocid` | `""` | Use an existing subnet; skips creating subnet/security list. |
+| `existing_internet_gateway_id` | `""` | Required only when creating a new subnet in an existing VCN. |
+
+### Using an existing VCN in another compartment
+
+- Set `compartment_ocid` to where VMs should live (e.g. `k3-staging`).
+- Set `use_existing_vcn = true`, `existing_vcn_ocid`, and `vcn_compartment_ocid`.
+- **Bare VCN (no subnet/IGW yet):** leave `existing_subnet_ocid` and `existing_internet_gateway_id` empty. Terraform creates IGW, route table, security list, and a public subnet in the VCN compartment. Set `subnet_cidr` to a block inside the VCN CIDR.
+- **Existing subnet:** set `existing_subnet_ocid` to attach VMs directly (ensure its security list allows k3s ports).
+- **Existing IGW only:** set `existing_internet_gateway_id` if the VCN already has an IGW but no subnet yet.
+
+Your OCI user/policy must allow compute in `compartment_ocid` and network manage in the VCN compartment.
 
 ### Ansible (`group_vars/all.yml`)
 

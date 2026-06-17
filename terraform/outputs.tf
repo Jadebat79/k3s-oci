@@ -1,3 +1,13 @@
+output "subnet_id" {
+  description = "Subnet OCID used by the k3s instances"
+  value       = local.subnet_id
+}
+
+output "vcn_cidr" {
+  description = "VCN CIDR used for intra-cluster security rules"
+  value       = local.vcn_cidr
+}
+
 output "server_public_ip" {
   description = "Public IP of the k3s server (control-plane) node"
   value       = oci_core_instance.server.public_ip
