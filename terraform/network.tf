@@ -3,24 +3,16 @@ data "oci_core_vcn" "existing" {
   vcn_id = var.existing_vcn_ocid
 }
 
-data "oci_core_subnet" "existing" {
-  count     = var.existing_subnet_ocid != "" ? 1 : 0
-  subnet_id = var.existing_subnet_ocid
-}
-
 locals {
-  manage_network = var.existing_subnet_ocid == ""
-
   vcn_id   = var.use_existing_vcn ? var.existing_vcn_ocid : oci_core_vcn.k3s[0].id
   vcn_cidr = var.use_existing_vcn ? data.oci_core_vcn.existing[0].cidr_blocks[0] : var.vcn_cidr
 
-  subnet_id = var.existing_subnet_ocid != "" ? var.existing_subnet_ocid : oci_core_subnet.k3s[0].id
+  subnet_id = oci_core_subnet.k3s.id
 
-  # Network resources (subnet, security list, route table, IGW) live in the VCN compartment
-  # when reusing an existing VCN; otherwise in the compute compartment.
+  # Network resources live in the VCN compartment when reusing an existing VCN.
   network_compartment_ocid = var.use_existing_vcn ? var.vcn_compartment_ocid : var.compartment_ocid
 
-  create_internet_gateway = local.manage_network && var.existing_internet_gateway_id == ""
+  create_internet_gateway = var.existing_internet_gateway_id == ""
 
   igw_id = var.existing_internet_gateway_id != "" ? var.existing_internet_gateway_id : oci_core_internet_gateway.k3s[0].id
 }
@@ -44,8 +36,6 @@ resource "oci_core_internet_gateway" "k3s" {
 }
 
 resource "oci_core_route_table" "k3s" {
-  count = local.manage_network ? 1 : 0
-
   compartment_id = local.network_compartment_ocid
   vcn_id         = local.vcn_id
   display_name   = "${var.name_prefix}-rt"
@@ -57,8 +47,6 @@ resource "oci_core_route_table" "k3s" {
 }
 
 resource "oci_core_security_list" "k3s" {
-  count = local.manage_network ? 1 : 0
-
   compartment_id = local.network_compartment_ocid
   vcn_id         = local.vcn_id
   display_name   = "${var.name_prefix}-seclist"
@@ -127,15 +115,13 @@ resource "oci_core_security_list" "k3s" {
 }
 
 resource "oci_core_subnet" "k3s" {
-  count = local.manage_network ? 1 : 0
-
   compartment_id             = local.network_compartment_ocid
   vcn_id                     = local.vcn_id
   cidr_block                 = var.subnet_cidr
   display_name               = "${var.name_prefix}-subnet"
   dns_label                  = "k3ssub"
-  route_table_id             = oci_core_route_table.k3s[0].id
-  security_list_ids          = [oci_core_security_list.k3s[0].id]
+  route_table_id             = oci_core_route_table.k3s.id
+  security_list_ids          = [oci_core_security_list.k3s.id]
   prohibit_public_ip_on_vnic = false
 }
 
@@ -148,7 +134,7 @@ check "existing_vcn_requires_ocid" {
 
 check "existing_vcn_requires_compartment" {
   assert {
-    condition     = !var.use_existing_vcn || !local.manage_network || var.vcn_compartment_ocid != ""
-    error_message = "vcn_compartment_ocid must be set when use_existing_vcn is true and Terraform is creating network resources in that VCN."
+    condition     = !var.use_existing_vcn || var.vcn_compartment_ocid != ""
+    error_message = "vcn_compartment_ocid must be set when use_existing_vcn is true."
   }
 }

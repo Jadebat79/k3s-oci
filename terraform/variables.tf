@@ -42,7 +42,13 @@ variable "existing_vcn_ocid" {
 }
 
 variable "vcn_compartment_ocid" {
-  description = "Compartment where the existing VCN lives. Required when use_existing_vcn is true and Terraform creates subnet/security list in that VCN."
+  description = "Compartment where the existing VCN lives. Required when use_existing_vcn is true."
+  type        = string
+  default     = ""
+}
+
+variable "existing_internet_gateway_id" {
+  description = "Optional. OCID of an existing internet gateway on the VCN. Leave empty to let Terraform create one (typical for a bare VCN)."
   type        = string
   default     = ""
 }

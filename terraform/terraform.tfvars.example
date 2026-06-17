@@ -11,13 +11,12 @@ EOT
 region           = "eu-frankfurt-1"
 compartment_ocid = "ocid1.compartment.oc1..aaaa..." # k3-staging (where VMs are created)
 
-# --- Existing bare VCN (no subnet/IGW yet) ---
-use_existing_vcn     = true
-existing_vcn_ocid    = "ocid1.vcn.oc1..aaaa..."          # your existing VCN
-vcn_compartment_ocid = "ocid1.compartment.oc1..bbbb..." # compartment that owns the VCN
-subnet_cidr          = "10.0.1.0/24"                   # must fit inside the VCN CIDR
-# existing_internet_gateway_id = ""                    # leave empty — Terraform creates IGW + subnet + security list + route table
-# existing_subnet_ocid         = ""                    # leave empty unless you already have a subnet to reuse
+# --- Existing VCN with IGW but no subnet yet ---
+use_existing_vcn             = true
+existing_vcn_ocid            = "ocid1.vcn.oc1..aaaa..."
+vcn_compartment_ocid         = "ocid1.compartment.oc1..bbbb..." # compartment that owns the VCN
+existing_internet_gateway_id = "ocid1.internetgateway.oc1..cccc..."
+subnet_cidr                  = "10.0.1.0/24" # must fit inside the VCN CIDR
 
 ssh_public_key      = "ssh-ed25519 AAAA... yourname@host"
 ssh_allowed_cidr    = "0.0.0.0/0"
