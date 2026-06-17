@@ -1,0 +1,13 @@
+---
+# Shared: install Helm once. Other roles depend on this.
+- name: Check for helm
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm_bin
+
+- name: Install Helm
+  ansible.builtin.shell: |
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm
+  when: not helm_bin.stat.exists

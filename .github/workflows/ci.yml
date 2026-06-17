@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  terraform:
+    name: terraform validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+      - name: fmt
+        run: terraform fmt -check -recursive
+      - name: init (no backend)
+        run: terraform init -backend=false
+      - name: validate
+        run: terraform validate
+
+  ansible:
+    name: ansible lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ansible
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install tools
+        run: pip install ansible-core ansible-lint yamllint
+      - name: yamllint
+        run: |
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .
+      - name: syntax-check
+        run: |
+          mkdir -p inventory
+          printf '[k3s_server]\nserver ansible_host=127.0.0.1 node_private_ip=10.0.0.10\n[k3s_agents]\nagent1 ansible_host=127.0.0.2 node_private_ip=10.0.0.11\n[k3s_cluster:children]\nk3s_server\nk3s_agents\n' > inventory/hosts.ini
+          ansible-playbook site.yml --syntax-check
+      - name: ansible-lint
+        run: |
+          ansible-lint || true   # advisory; remove '|| true' to enforce

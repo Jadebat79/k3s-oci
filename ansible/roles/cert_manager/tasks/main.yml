@@ -1,0 +1,46 @@
+---
+- name: Add jetstack helm repo
+  ansible.builtin.command: helm repo add jetstack https://charts.jetstack.io
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: repo_add
+  changed_when: "'has been added' in repo_add.stdout"
+  failed_when: repo_add.rc != 0 and 'already exists' not in repo_add.stderr
+
+- name: Update helm repos
+  ansible.builtin.command: helm repo update
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  changed_when: false
+
+- name: Install / upgrade cert-manager (with CRDs)
+  ansible.builtin.command: >
+    helm upgrade --install cert-manager jetstack/cert-manager
+    --namespace cert-manager --create-namespace
+    --set crds.enabled=true
+    --wait --timeout 5m
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: cm_install
+  changed_when: "'has been upgraded' in cm_install.stdout or 'has been installed' in cm_install.stdout"
+
+- name: Wait for cert-manager webhook to be ready
+  ansible.builtin.command: >
+    kubectl -n cert-manager wait --for=condition=available
+    deployment/cert-manager-webhook --timeout=120s
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  changed_when: false
+
+- name: Render ClusterIssuers (LE staging + prod)
+  ansible.builtin.template:
+    src: clusterissuers.yaml.j2
+    dest: /tmp/clusterissuers.yaml
+    mode: "0644"
+
+- name: Apply ClusterIssuers
+  ansible.builtin.command: kubectl apply -f /tmp/clusterissuers.yaml
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: issuer_apply
+  changed_when: "'created' in issuer_apply.stdout or 'configured' in issuer_apply.stdout"

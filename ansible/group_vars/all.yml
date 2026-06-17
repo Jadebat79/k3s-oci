@@ -1,0 +1,28 @@
+---
+# k3s
+k3s_version: "v1.31.4+k3s1"   # pin a known-good release; see github.com/k3s-io/k3s/releases
+k3s_channel_url: "https://get.k3s.io"
+
+# Postgres (staging)
+pg_namespace: "data"
+pg_user: "staging"
+pg_password: "change-me-strong"   # override with --extra-vars or a vault file
+pg_db: "appdb"
+pg_storage_size: "10Gi"
+pg_image: "postgres:16"
+
+# Ingress + TLS
+enable_ingress: true
+enable_tls: true
+acme_email: "you@example.com"          # used for Let's Encrypt registration
+# Your app's DNS name. Must resolve to the server's public IP for TLS to issue.
+# No domain? Use sslip.io: "myapp.<SERVER_PUBLIC_IP>.sslip.io"
+app_domain: "myapp.example.com"
+# Issuer the sample Ingress requests: letsencrypt-staging | letsencrypt-prod
+cert_issuer: "letsencrypt-staging"
+
+# Backups (optional). Leave pg_backup_par_url empty to skip the CronJob.
+# Create a bucket + Pre-Authenticated Request (write) in OCI Object Storage,
+# then paste the PAR upload URL here (ending in /o/).
+pg_backup_par_url: ""
+pg_backup_schedule: "0 2 * * *"

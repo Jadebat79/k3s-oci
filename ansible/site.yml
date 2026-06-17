@@ -1,0 +1,32 @@
+---
+# Stage 1: prep every node (firewall, packages)
+- name: Prepare all nodes
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - common
+
+# Stage 2: install the k3s server (control-plane) and capture the join token
+- name: Install k3s server
+  hosts: k3s_server
+  become: true
+  roles:
+    - k3s_server
+
+# Stage 3: join the agents using the token from the server
+- name: Install k3s agents
+  hosts: k3s_agents
+  become: true
+  roles:
+    - k3s_agent
+
+# Stage 4: platform add-ons + Postgres (run on the server)
+- name: Deploy platform add-ons and Postgres
+  hosts: k3s_server
+  become: true
+  roles:
+    - role: ingress_nginx
+      when: enable_ingress | bool
+    - role: cert_manager
+      when: enable_tls | bool
+    - role: postgres

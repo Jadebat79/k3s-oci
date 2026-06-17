@@ -1,0 +1,63 @@
+# Example staging app: Deployment + Service + TLS Ingress.
+# cert-manager watches the Ingress and provisions a Let's Encrypt cert into
+# the secret named in tls.secretName.
+#
+# Replace YOUR_DOMAIN with app_domain (e.g. myapp.<SERVER_IP>.sslip.io) and
+# the cert-manager issuer with letsencrypt-prod once staging works.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: myapp }
+  template:
+    metadata:
+      labels: { app: myapp }
+    spec:
+      containers:
+        - name: myapp
+          image: your-registry/myapp:staging
+          env:
+            - name: DATABASE_URL
+              value: "postgres://staging:change-me-strong@postgres.data.svc.cluster.local:5432/appdb"
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+  namespace: default
+spec:
+  selector: { app: myapp }
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - YOUR_DOMAIN
+      secretName: myapp-tls
+  rules:
+    - host: YOUR_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp
+                port:
+                  number: 80

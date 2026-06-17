@@ -1,0 +1,34 @@
+---
+- name: Pick a worker node to pin Postgres to
+  ansible.builtin.shell: >
+    k3s kubectl get nodes
+    --selector='!node-role.kubernetes.io/control-plane'
+    -o jsonpath='{.items[0].metadata.name}'
+  register: db_node
+  changed_when: false
+
+- name: Fail if no worker node is available
+  ansible.builtin.fail:
+    msg: "No worker node found to host Postgres. Are the agents joined?"
+  when: db_node.stdout | length == 0
+
+- name: Label the chosen node role=database
+  ansible.builtin.command: >
+    k3s kubectl label node {{ db_node.stdout }} role=database --overwrite
+  changed_when: true
+
+- name: Render Postgres manifest
+  ansible.builtin.template:
+    src: postgres.yaml.j2
+    dest: /tmp/postgres.yaml
+    mode: "0644"
+
+- name: Apply Postgres manifest
+  ansible.builtin.command: k3s kubectl apply -f /tmp/postgres.yaml
+  register: pg_apply
+  changed_when: "'created' in pg_apply.stdout or 'configured' in pg_apply.stdout"
+
+- name: Wait for Postgres pod to be ready
+  ansible.builtin.command: >
+    k3s kubectl -n {{ pg_namespace }} wait --for=condition=ready pod/postgres-0 --timeout=180s
+  changed_when: false

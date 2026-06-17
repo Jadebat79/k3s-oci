@@ -1,0 +1,15 @@
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+terraform/crash.log
+
+# Generated inventory
+ansible/inventory/hosts.ini
+
+# Secrets / keys
+*.pem
+*.key
+vault-password.txt

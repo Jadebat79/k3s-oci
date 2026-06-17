@@ -1,0 +1,21 @@
+---
+- name: Gather server connection details
+  ansible.builtin.set_fact:
+    k3s_server_url: "https://{{ hostvars[groups['k3s_server'][0]].node_private_ip }}:6443"
+    k3s_token: "{{ hostvars[groups['k3s_server'][0]].k3s_node_token }}"
+
+- name: Install k3s agent and join the cluster
+  ansible.builtin.shell: |
+    curl -sfL {{ k3s_channel_url }} | \
+      INSTALL_K3S_VERSION={{ k3s_version }} \
+      K3S_URL={{ k3s_server_url }} \
+      K3S_TOKEN={{ k3s_token }} \
+      sh -s - agent --node-ip={{ node_private_ip }}
+  args:
+    creates: /usr/local/bin/k3s
+
+- name: Wait for k3s-agent service to be active
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: started
+    enabled: true

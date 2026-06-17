@@ -1,0 +1,70 @@
+---
+- name: Wait for cloud-init to finish
+  ansible.builtin.command: cloud-init status --wait
+  changed_when: false
+  failed_when: false
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - iptables
+      - netfilter-persistent
+    state: present
+
+- name: Allow k3s API server (6443/tcp)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "6443"
+    jump: ACCEPT
+    action: insert
+  notify: persist iptables
+
+- name: Allow kubelet (10250/tcp)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "10250"
+    jump: ACCEPT
+    action: insert
+  notify: persist iptables
+
+- name: Allow Flannel VXLAN (8472/udp)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: "8472"
+    jump: ACCEPT
+    action: insert
+  notify: persist iptables
+
+- name: Allow intra-VCN traffic (pod/service/Postgres)
+  ansible.builtin.iptables:
+    chain: INPUT
+    source: "10.0.0.0/16"
+    jump: ACCEPT
+    action: insert
+  notify: persist iptables
+
+- name: Allow HTTP/HTTPS for ingress (80,443/tcp)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+    action: insert
+  loop:
+    - "80"
+    - "443"
+  notify: persist iptables
+
+- name: Disable swap now
+  ansible.builtin.command: swapoff -a
+  changed_when: false
+  failed_when: false

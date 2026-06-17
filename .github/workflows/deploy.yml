@@ -1,0 +1,55 @@
+name: deploy
+
+# Manual trigger only -- this provisions real infrastructure.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "terraform action"
+        type: choice
+        options: [apply, destroy]
+        default: apply
+
+# Required repo secrets (Settings > Secrets and variables > Actions):
+#   OCI_TENANCY_OCID, OCI_USER_OCID, OCI_FINGERPRINT, OCI_REGION,
+#   OCI_COMPARTMENT_OCID, OCI_PRIVATE_KEY (PEM contents),
+#   SSH_PUBLIC_KEY, SSH_PRIVATE_KEY (for Ansible to reach the nodes),
+#   PG_PASSWORD, ACME_EMAIL, APP_DOMAIN
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
+      TF_VAR_user_ocid: ${{ secrets.OCI_USER_OCID }}
+      TF_VAR_fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+      TF_VAR_region: ${{ secrets.OCI_REGION }}
+      TF_VAR_compartment_ocid: ${{ secrets.OCI_COMPARTMENT_OCID }}
+      TF_VAR_private_key: ${{ secrets.OCI_PRIVATE_KEY }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write key material
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform apply / destroy
+        working-directory: terraform
+        run: |
+          terraform init
+          terraform ${{ github.event.inputs.action }} -auto-approve
+
+      - name: Configure cluster with Ansible
+        if: ${{ github.event.inputs.action == 'apply' }}
+        working-directory: ansible
+        run: |
+          pip install ansible-core
+          ansible-playbook site.yml \
+            --extra-vars "pg_password=${{ secrets.PG_PASSWORD }}" \
+            --extra-vars "acme_email=${{ secrets.ACME_EMAIL }}" \
+            --extra-vars "app_domain=${{ secrets.APP_DOMAIN }}"
