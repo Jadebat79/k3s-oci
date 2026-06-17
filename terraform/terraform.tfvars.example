@@ -27,6 +27,13 @@ ssh_allowed_cidr    = "0.0.0.0/0"
 # Or pin by full name (see the `availability_domains` output):
 # availability_domain = "kIdk:UK-LONDON-1-AD-2"
 
+# Shape selection:
+# - "VM.Standard.A1.Flex"  ARM, Always Free (but often "out of host capacity").
+# - "VM.Standard.E4.Flex"  AMD x86, paid (covered by $300 trial credits), reliably available.
+# - "VM.Standard.E5.Flex"  AMD x86 (newer), paid.
+# The Ubuntu image auto-matches the shape architecture.
+instance_shape = "VM.Standard.A1.Flex"
+
 # 3 nodes total = 1 server + 2 agents, each 1 OCPU / 6 GB (= 3 OCPU / 18 GB).
 # If capped at 2 OCPU / 12 GB, set agent_count = 1 (2 nodes total).
 agent_count         = 2

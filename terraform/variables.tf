@@ -82,8 +82,14 @@ variable "agent_count" {
   default     = 2
 }
 
+variable "instance_shape" {
+  description = "Compute shape. 'VM.Standard.A1.Flex' (ARM, Always Free) or a paid AMD flex like 'VM.Standard.E4.Flex'/'VM.Standard.E5.Flex' (better availability, uses trial credits). The Ubuntu image auto-matches this shape's architecture."
+  type        = string
+  default     = "VM.Standard.A1.Flex"
+}
+
 variable "instance_ocpus" {
-  description = "OCPUs per node. A1.Flex minimum is 1."
+  description = "OCPUs per node. Flex shapes (A1/E4/E5) minimum is 1."
   type        = number
   default     = 1
 }

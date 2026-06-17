@@ -6,7 +6,7 @@ data "oci_core_images" "ubuntu" {
   compartment_id           = var.compartment_ocid
   operating_system         = "Canonical Ubuntu"
   operating_system_version = "22.04"
-  shape                    = "VM.Standard.A1.Flex"
+  shape                    = var.instance_shape
   sort_by                  = "TIMECREATED"
   sort_order               = "DESC"
 }
@@ -28,7 +28,7 @@ resource "oci_core_instance" "server" {
   compartment_id      = var.compartment_ocid
   availability_domain = local.ad_name
   display_name        = "${var.name_prefix}-server"
-  shape               = "VM.Standard.A1.Flex"
+  shape               = var.instance_shape
 
   shape_config {
     ocpus         = var.instance_ocpus
@@ -56,7 +56,7 @@ resource "oci_core_instance" "agent" {
   compartment_id      = var.compartment_ocid
   availability_domain = local.ad_name
   display_name        = "${var.name_prefix}-agent-${count.index + 1}"
-  shape               = "VM.Standard.A1.Flex"
+  shape               = var.instance_shape
 
   shape_config {
     ocpus         = var.instance_ocpus
