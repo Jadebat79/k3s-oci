@@ -1,0 +1,45 @@
+# Nightly pg_dump of every app database to OCI Object Storage. Suspended until
+# Secret backup-par exists: create a bucket + Pre-Authenticated Request (write),
+# then
+#   kubectl -n data create secret generic backup-par --from-literal=url='https://.../o/'
+#   kubectl -n data patch cronjob pg-backup -p '{"spec":{"suspend":false}}'
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-backup
+  namespace: data
+spec:
+  schedule: "0 2 * * *"
+  suspend: true
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: dump
+              image: postgres:16-alpine
+              env:
+                - name: PGHOST
+                  value: postgres
+                - name: PGUSER
+                  value: postgres
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef: { name: postgres-admin, key: password }
+                - name: PAR_URL
+                  valueFrom:
+                    secretKeyRef: { name: backup-par, key: url }
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  apk add --no-cache curl >/dev/null
+                  for db in $(psql -Atc "select datname from pg_database where not datistemplate and datname <> 'postgres'"); do
+                    pg_dump -Fc "$db" | curl -sf -T - "${PAR_URL}${db}-$(date +%F).dump"
+                    echo "backed up $db"
+                  done
+              resources:
+                requests: { cpu: 10m, memory: 64Mi }
