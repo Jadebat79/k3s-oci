@@ -26,6 +26,12 @@ spec:
           podSelector:
             matchLabels:
               app: omnipay
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bht
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: bht-api
       ports:
         - port: 5432
 ---

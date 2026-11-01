@@ -17,6 +17,7 @@ Passwords are generated into Secrets in `data`. They are never in git.
 |---|---|---|---|
 | aristocrats | `aristocrats` | `aristocrats` / `aa:` | `DATABASE_URL`, `REDIS_URL` in `aristocrats/aristocrats-secrets` |
 | omnipay | `omnipay` | none | `POSTGRES_*` in `omnipay/omnipay-secrets`; Service `omnipay/postgres` is an ExternalName to `postgres.data.svc.cluster.local` |
+| bht | `bht` | none (doesn't use Redis) | `BHT_DATABASE_URL` in `bht/bht-secrets`, filled by bht-api `deploy/set-secrets.sh` |
 
 ## Setup
 
